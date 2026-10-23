@@ -115,7 +115,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
     </div>
   </section>
 
-  <div class="foot"><div id="paso"></div><div class="bar"><i id="barra"></i></div><div>al menos 47 piezas retiradas</div></div>
+  <div class="foot"><div id="paso"></div><div id="sonido-aviso">clic para activar el sonido</div><div class="bar"><i id="barra"></i></div><div>al menos 47 piezas retiradas</div></div>
 </div>
 
 <script>
@@ -148,9 +148,39 @@ const pasos = [{ escena: 's-intro', seg: 7 }]
 
 let paso = -1, timers = [], inicioPaso = 0, pausa = false;
 function limpiar() { timers.forEach(clearTimeout); timers = []; }
+// ---------- Sonido de teclado (sintetizado, sin archivos) ----------
+// El navegador solo deja sonar después de un clic o una tecla: haz clic una vez en la pantalla.
+let actx = null, sonido = true;
+function activarSonido() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } }
+  if (actx.state === 'suspended') actx.resume();
+  const av = document.getElementById('sonido-aviso'); if (av) av.style.display = 'none';
+}
+function ruido(dur, frec, q, vol, caida, retraso) {
+  if (!sonido || !actx || actx.state !== 'running') return;
+  const n = Math.floor(actx.sampleRate * dur);
+  const buf = actx.createBuffer(1, n, actx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, caida);
+  const src = actx.createBufferSource(); src.buffer = buf;
+  const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = frec; f.Q.value = q;
+  const g = actx.createGain(); g.gain.value = vol;
+  src.connect(f); f.connect(g); g.connect(actx.destination);
+  src.start(actx.currentTime + (retraso || 0));
+}
+// una tecla: el golpe del dedo + el "clac" del tope
+function tecla(ch) {
+  if (ch === ' ') { ruido(0.05, 700, 0.9, 0.45, 3); ruido(0.03, 2200, 1.2, 0.15, 5, 0.012); return; }
+  const f = 1800 + Math.random() * 1400;
+  ruido(0.018, f, 1.4, 0.35, 5);
+  ruido(0.035, 420 + Math.random() * 120, 1.0, 0.25, 4, 0.008);
+}
+function enter() { ruido(0.07, 600, 0.8, 0.6, 3); ruido(0.04, 2600, 1.2, 0.25, 5, 0.015); }
+function sello() { ruido(0.05, 900, 1, 0.35, 4); }
+
 function escribir(el, txt, ms, despues) {
   el.textContent = ''; let k = 0;
-  const f = () => { if (k <= txt.length) { el.textContent = txt.slice(0, k++); timers.push(setTimeout(f, ms)); } else if (despues) despues(); };
+  const f = () => { if (k <= txt.length) { if (k > 0) tecla(txt[k - 1]); el.textContent = txt.slice(0, k++); timers.push(setTimeout(f, ms * (0.7 + Math.random() * 0.6))); } else { enter(); if (despues) despues(); } };
   f();
 }
 function ir(n) {
@@ -168,7 +198,7 @@ function ir(n) {
     escribir($('f-titulo'), p.titulo, 28, () => {
       $('f-autor').textContent = p.autor; $('f-fecha').textContent = p.fecha;
       $('f-sala').textContent = p.sala; $('f-tipo').textContent = p.tipo;
-      timers.push(setTimeout(() => $('f-sello').classList.add('on'), 500));
+      timers.push(setTimeout(() => { $('f-sello').classList.add('on'); sello(); }, 500));
     });
   }
   $('paso').textContent = String(paso + 1).padStart(2, '0') + ' / ' + pasos.length;
@@ -195,7 +225,10 @@ function ajustar() {
 }
 
 // teclado: espacio pausa · ← → anterior/siguiente
+addEventListener('pointerdown', activarSonido);
 addEventListener('keydown', e => {
+  activarSonido();
+  if (e.key === 's' || e.key === 'S') sonido = !sonido;
   if (e.key === ' ') { pausa = !pausa; if (!pausa) ir(paso); else limpiarSoloAvance(); e.preventDefault(); }
   if (e.key === 'ArrowRight') ir(paso + 1);
   if (e.key === 'ArrowLeft') ir(paso - 1);
