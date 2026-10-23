@@ -10,112 +10,119 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-/* Ficha en loop, vertical 1080×1920 escalada. Estilo claro y sobrio, de interfaz de IA. */
+/* Columna vertical fluida: llena cualquier tamaño de ventana, sin bandas ni huecos.
+   Todo se mide en vw (ancho) para que funcione igual de delgada o de ancha. */
 :root {
   --bg: #F7F7F5; --card: #FFFFFF; --ink: #0D0D0D; --ink2: #5E5E5A; --ink3: #9A9A94;
-  --line: #E4E4DF; --soft: #EFEFEB; --accent: #0D0D0D;
+  --line: #E4E4DF; --soft: #EFEFEB;
   --sans: 'Geist', 'Helvetica Neue', Arial, sans-serif;
   --mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+  --pad: 5vw;
 }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
-#stage { position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; transform-origin: 0 0; font-family: var(--sans); color: var(--ink); }
+#stage { position: fixed; inset: 0; display: flex; flex-direction: column; font-family: var(--sans); color: var(--ink); }
 
-.top { position: absolute; left: 0; right: 0; top: 0; height: 120px; display: flex; align-items: center; gap: 16px; padding: 0 64px; }
-.top .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); }
-.top .t { font-size: 22px; font-weight: 500; letter-spacing: -.01em; }
-.top .r { margin-left: auto; font-family: var(--mono); font-size: 18px; color: var(--ink3); }
-.foot { position: absolute; left: 64px; right: 64px; bottom: 0; height: 110px; display: flex; align-items: center; gap: 28px; font-size: 18px; color: var(--ink3); font-family: var(--mono); }
-.foot .bar { flex: 1; height: 2px; background: var(--line); position: relative; border-radius: 2px; }
+.top { flex-shrink: 0; display: flex; align-items: center; gap: 2.2vw; padding: 4vw var(--pad) 3vw; }
+.top .dot { width: 2.2vw; height: 2.2vw; border-radius: 50%; background: var(--ink); flex-shrink: 0; }
+.top .t { font-size: 3.4vw; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top .r { margin-left: auto; font-family: var(--mono); font-size: 2.6vw; color: var(--ink3); white-space: nowrap; }
+.foot { flex-shrink: 0; display: flex; align-items: center; gap: 3vw; padding: 3vw var(--pad) 4vw; font-size: 2.6vw; color: var(--ink3); font-family: var(--mono); white-space: nowrap; }
+.foot .bar { flex: 1; height: 2px; background: var(--line); position: relative; border-radius: 2px; min-width: 6vw; }
 .foot .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); width: 0; border-radius: 2px; }
 
-.scene { position: absolute; left: 0; right: 0; top: 120px; bottom: 110px; display: none; }
-.scene.on { display: block; animation: aparece .7s cubic-bezier(.2,.7,.2,1) both; }
-@keyframes aparece { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.scenes { flex: 1; min-height: 0; position: relative; }
+.scene { position: absolute; inset: 0; padding: 0 var(--pad); display: none; flex-direction: column; gap: 3vw; }
+.scene.on { display: flex; animation: aparece .7s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes aparece { from { opacity: 0; transform: translateY(1.4vw); } to { opacity: 1; transform: none; } }
 
-/* intro: la pregunta como en una caja de conversación */
-.big { position: absolute; left: 50%; top: 520px; transform: translateX(-50%); width: 952px; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 36px; padding: 44px 52px 96px; font-size: 68px; line-height: 1.15; font-weight: 500; letter-spacing: -.025em; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.06); }
-.big::after { content: ''; position: absolute; right: 36px; bottom: 28px; width: 52px; height: 52px; border-radius: 50%; background: var(--ink); }
-.big::before { content: '↑'; position: absolute; right: 36px; bottom: 28px; width: 52px; height: 52px; line-height: 52px; text-align: center; color: #fff; font-size: 28px; z-index: 1; }
-.sub { position: absolute; left: 50%; top: 1060px; transform: translateX(-50%); width: 900px; text-align: center; font-size: 26px; line-height: 1.6; color: var(--ink2); }
-.cursor::after { content: ''; display: inline-block; width: 4px; height: .9em; background: var(--ink); margin-left: 8px; vertical-align: -0.08em; animation: blink 1s steps(1) infinite; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 4.5vw; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 1.5vw 5vw rgba(0,0,0,.06); }
+
+/* intro: la pregunta llena la columna */
+.big { flex: 1; display: flex; flex-direction: column; justify-content: center; position: relative; padding: 7vw 7vw 16vw; font-size: 10.5vw; line-height: 1.08; font-weight: 500; letter-spacing: -.03em; }
+.big .send { position: absolute; right: 5vw; bottom: 5vw; width: 9vw; height: 9vw; border-radius: 50%; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 5vw; }
+.sub { flex-shrink: 0; font-size: 3.4vw; line-height: 1.5; color: var(--ink2); }
+.cursor::after { content: ''; display: inline-block; width: .6vw; min-width: 2px; height: .9em; background: var(--ink); margin-left: 1vw; vertical-align: -0.08em; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ficha */
-.marco { position: absolute; left: 64px; right: 64px; top: 40px; height: 620px; border-radius: 28px; background: var(--soft); display: flex; align-items: center; justify-content: center; }
-.marco::before { content: ''; position: absolute; inset: 56px; border: 2px dashed #CFCFC9; border-radius: 12px; }
-.marco span { font-family: var(--mono); font-size: 22px; color: var(--ink3); letter-spacing: .04em; }
-.ficha { position: absolute; left: 64px; right: 64px; top: 700px; height: 920px; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; box-shadow: 0 12px 40px rgba(0,0,0,.05); }
-.ficha .n { font-family: var(--mono); font-size: 18px; color: var(--ink3); }
-.ficha h2 { margin: 0; font-size: 62px; line-height: 1.1; font-weight: 500; letter-spacing: -.025em; min-height: 2.2em; }
-.campos { display: grid; grid-template-columns: 150px minmax(0, 1fr); row-gap: 0; font-size: 26px; border-top: 1px solid var(--line); }
-.campos .k, .campos .v { padding: 16px 0; border-bottom: 1px solid var(--line); }
-.campos .k { color: var(--ink3); font-size: 20px; font-family: var(--mono); padding-top: 20px; }
-.campos .v { color: var(--ink); }
-.sello { margin-top: auto; align-self: flex-start; background: var(--ink); color: #fff; font-size: 22px; font-weight: 500; padding: 12px 24px; border-radius: 999px; opacity: 0; }
+/* ficha: el marco vacío ocupa todo lo que sobra */
+.marco { flex: 1; min-height: 0; border-radius: 4.5vw; background: var(--soft); display: flex; align-items: center; justify-content: center; position: relative; }
+.marco::before { content: ''; position: absolute; inset: 6vw; border: 2px dashed #CFCFC9; border-radius: 1.5vw; }
+.marco span { font-family: var(--mono); font-size: 3vw; color: var(--ink3); letter-spacing: .04em; }
+.ficha { flex-shrink: 0; padding: 6vw 6.5vw; display: flex; flex-direction: column; gap: 3.2vw; }
+.ficha .n { font-family: var(--mono); font-size: 2.6vw; color: var(--ink3); }
+.ficha h2 { margin: 0; font-size: 7.2vw; line-height: 1.08; font-weight: 500; letter-spacing: -.025em; min-height: 2.16em; }
+.campos { display: grid; grid-template-columns: 18vw minmax(0, 1fr); font-size: 3.6vw; border-top: 1px solid var(--line); }
+.campos .k, .campos .v { padding: 2vw 0; border-bottom: 1px solid var(--line); }
+.campos .k { color: var(--ink3); font-size: 2.8vw; font-family: var(--mono); padding-top: 2.6vw; }
+.sello { align-self: flex-start; background: var(--ink); color: #fff; font-size: 3vw; font-weight: 500; padding: 1.6vw 3.2vw; border-radius: 999px; opacity: 0; }
 .sello.on { animation: sello .5s ease both; }
-@keyframes sello { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes sello { from { opacity: 0; transform: translateY(1vw); } to { opacity: 1; transform: none; } }
 
-/* voces y estado */
-.voz { position: absolute; left: 64px; right: 64px; padding: 48px 56px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; }
-.voz q { display: block; font-size: 60px; line-height: 1.2; font-weight: 500; letter-spacing: -.02em; quotes: '«' '»'; }
-.voz cite { display: block; margin-top: 22px; font-style: normal; font-size: 22px; color: var(--ink2); }
-.estado { position: absolute; left: 64px; right: 64px; top: 80px; display: flex; flex-direction: column; gap: 20px; }
-.linea { display: grid; grid-template-columns: 1fr; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 32px 44px; font-size: 32px; line-height: 1.35; }
-.linea .f { font-family: var(--mono); color: var(--ink3); font-size: 26px; padding-top: 4px; }
-.linea .d { color: var(--ink); }
-.pregunta { font-size: 92px; line-height: 1.05; font-weight: 500; letter-spacing: -.03em; margin-top: 40px; }
-.fuentes { position: absolute; left: 64px; right: 64px; top: 80px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 48px 56px; font-size: 26px; line-height: 1.9; color: var(--ink2); }
-.fuentes b { color: var(--ink); font-weight: 500; }
-.fuentes h3 { margin: 0 0 16px; font-family: var(--mono); font-size: 18px; font-weight: 400; color: var(--ink3); letter-spacing: .06em; }
+/* voces: cada una ocupa la mitad del alto */
+.voz { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 6vw 7vw; }
+.voz q { display: block; font-size: 7.6vw; line-height: 1.12; font-weight: 500; letter-spacing: -.025em; quotes: '«' '»'; }
+.voz cite { display: block; margin-top: 3vw; font-style: normal; font-size: 3vw; line-height: 1.4; color: var(--ink2); }
+
+/* estado */
+.linea { flex-shrink: 0; padding: 5vw 6vw; display: flex; flex-direction: column; gap: 1.6vw; }
+.linea .f { font-family: var(--mono); color: var(--ink3); font-size: 3vw; }
+.linea .d { font-size: 4.4vw; line-height: 1.3; }
+.pregunta { flex: 1; display: flex; align-items: center; font-size: 13vw; line-height: 1.02; font-weight: 500; letter-spacing: -.035em; }
+
+/* fuentes */
+.fuentes { flex: 1; padding: 7vw; display: flex; flex-direction: column; justify-content: center; gap: 4vw; font-size: 4vw; line-height: 1.4; color: var(--ink2); }
+.fuentes b { color: var(--ink); font-weight: 500; display: block; font-size: 5vw; }
+.fuentes h3 { margin: 0; font-family: var(--mono); font-size: 2.8vw; font-weight: 400; color: var(--ink3); letter-spacing: .06em; }
+.scene > :last-child { margin-bottom: 0; }
 @media (prefers-reduced-motion: reduce) { .scene.on, .sello.on { animation: none; opacity: 1; } .cursor::after { animation: none; } }
 </style>
 
 <div id="stage">
-  <div class="top"><div class="dot"></div><div class="t">Inventario de ausencias · Museo Nacional</div><div class="r" id="reloj"></div></div>
+  <div class="top"><div class="dot"></div><div class="t">Inventario de ausencias</div><div class="r" id="reloj"></div></div>
 
-  <section class="scene" id="s-intro">
-    <div class="big"><span class="cursor" id="intro-txt"></span></div>
-    <div class="sub">Museo Nacional de Colombia · salas 7 «Memoria y Nación» y 11 «Hacer sociedad»<br>piezas retiradas de exhibición el 15 de octubre de 2026</div>
-  </section>
+  <div class="scenes">
+    <section class="scene" id="s-intro">
+      <div class="big card"><span class="cursor" id="intro-txt"></span><div class="send" aria-hidden="true">↑</div></div>
+      <div class="sub">Museo Nacional de Colombia · salas 7 «Memoria y Nación» y 11 «Hacer sociedad» · piezas retiradas de exhibición el 15 de octubre de 2026</div>
+    </section>
 
-  <section class="scene" id="s-ficha">
-    <div class="marco"><span id="marco-txt">pared vacía</span></div>
-    <div class="ficha">
-      <div class="n" id="f-n"></div>
-      <h2 id="f-titulo"></h2>
-      <div class="campos">
-        <div class="k">autor</div><div class="v" id="f-autor"></div>
-        <div class="k">fecha</div><div class="v" id="f-fecha"></div>
-        <div class="k">sala</div><div class="v" id="f-sala"></div>
-        <div class="k">tipo</div><div class="v" id="f-tipo"></div>
+    <section class="scene" id="s-ficha">
+      <div class="marco"><span id="marco-txt">pared vacía</span></div>
+      <div class="ficha card">
+        <div class="n" id="f-n"></div>
+        <h2 id="f-titulo"></h2>
+        <div class="campos">
+          <div class="k">autor</div><div class="v" id="f-autor"></div>
+          <div class="k">fecha</div><div class="v" id="f-fecha"></div>
+          <div class="k">sala</div><div class="v" id="f-sala"></div>
+          <div class="k">tipo</div><div class="v" id="f-tipo"></div>
+        </div>
+        <div class="sello" id="f-sello">Retirada · 15 oct 2026</div>
       </div>
-      <div class="sello" id="f-sello">Retirada · 15 oct 2026</div>
-    </div>
-  </section>
+    </section>
 
-  <section class="scene" id="s-voces">
-    <div class="voz" style="top:200px"><q>El Museo no puede ser un espacio de apología al delito o revictimización.</q><cite>— Paola Holguín, ministra de Cultura · según La Silla Vacía</cite></div>
-    <div class="voz" style="top:900px"><q>Totalmente arbitraria.</q><cite>— Andrés Góngora, ex curador jefe de etnografía del Museo Nacional, sobre el retiro · Cerosetenta</cite></div>
-  </section>
+    <section class="scene" id="s-voces">
+      <div class="voz card"><q>El Museo no puede ser un espacio de apología al delito o revictimización.</q><cite>— Paola Holguín, ministra de Cultura · según La Silla Vacía</cite></div>
+      <div class="voz card"><q>Totalmente arbitraria.</q><cite>— Andrés Góngora, ex curador jefe de etnografía del Museo Nacional, sobre el retiro · Cerosetenta</cite></div>
+    </section>
 
-  <section class="scene" id="s-estado">
-    <div class="estado">
-      <div class="linea"><div class="f">15.10.2026</div><div class="d">El Ministerio de Cultura ordena desmontar piezas de las salas 7 y 11. La Silla Vacía documenta al menos 47.</div></div>
-      <div class="linea"><div class="f">19.10.2026</div><div class="d">Un juez de Bogotá ordena conservar las piezas en un lugar seguro y frenar nuevas intervenciones mientras decide si deben volver.</div></div>
-      <div class="pregunta cursor">¿Volverán a las salas?</div>
-    </div>
-  </section>
+    <section class="scene" id="s-estado">
+      <div class="linea card"><div class="f">15.10.2026</div><div class="d">El Ministerio de Cultura ordena desmontar piezas de las salas 7 y 11. La Silla Vacía documenta al menos 47.</div></div>
+      <div class="linea card"><div class="f">19.10.2026</div><div class="d">Un juez de Bogotá ordena conservar las piezas en un lugar seguro y frenar nuevas intervenciones mientras decide si deben volver.</div></div>
+      <div class="pregunta"><span class="cursor">¿Volverán a las salas?</span></div>
+    </section>
 
-  <section class="scene" id="s-fuentes">
-    <div class="fuentes">
-      <h3>Fuentes · consultadas el 22 oct 2026</h3>
-      <b>La Silla Vacía</b> · Catálogo del retiro de obras en el Museo Nacional (20.10.2026)<br>
-      <b>Cerosetenta</b> · Entrevista a Andrés Góngora, ex curador del Museo Nacional (19.10.2026)<br>
-      <b>Euronews</b> · Un juez ordena proteger las piezas retiradas del Museo Nacional (20.10.2026)
-    </div>
-  </section>
+    <section class="scene" id="s-fuentes">
+      <div class="fuentes card">
+        <h3>Fuentes · consultadas el 22 oct 2026</h3>
+        <div><b>La Silla Vacía</b>Catálogo del retiro de obras en el Museo Nacional · 20.10.2026</div>
+        <div><b>Cerosetenta</b>Entrevista a Andrés Góngora, ex curador del Museo Nacional · 19.10.2026</div>
+        <div><b>Euronews</b>Un juez ordena proteger las piezas retiradas del Museo Nacional · 20.10.2026</div>
+      </div>
+    </section>
+  </div>
 
-  <div class="foot"><div id="paso"></div><div id="sonido-aviso">clic para activar el sonido</div><div class="bar"><i id="barra"></i></div><div>al menos 47 piezas retiradas</div></div>
+  <div class="foot"><div id="paso"></div><div id="sonido-aviso">clic: sonido</div><div class="bar"><i id="barra"></i></div><div>47+ retiradas</div></div>
 </div>
 
 <script>
@@ -211,18 +218,12 @@ function tic() {
   const P = pasos[paso];
   if (P && !pausa) $('barra').style.width = Math.min(100, (performance.now() - inicioPaso) / (P.seg * 10)) + '%';
   const d = new Date();
-  $('reloj').textContent = d.toLocaleDateString('es-CO') + ' · ' + d.toLocaleTimeString('es-CO', { hour12: false });
+  $('reloj').textContent = d.toLocaleTimeString('es-CO', { hour12: false });
   requestAnimationFrame(tic);
 }
 
 // escala
-function ajustar() {
-  const s = Math.min(innerWidth / 1080, innerHeight / 1920);
-  const st = $('stage');
-  st.style.transform = 'scale(' + s + ')';
-  st.style.left = Math.round((innerWidth - 1080 * s) / 2) + 'px';
-  st.style.top = Math.round((innerHeight - 1920 * s) / 2) + 'px';
-}
+function ajustar() { /* diseño fluido: no hace falta escalar */ }
 
 // teclado: espacio pausa · ← → anterior/siguiente
 addEventListener('pointerdown', activarSonido);
