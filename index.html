@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventario de ausencias</title>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Ficha en loop, vertical 1080×1920 escalada. Estilo claro y sobrio, de interfaz de IA. */
+:root {
+  --bg: #F7F7F5; --card: #FFFFFF; --ink: #0D0D0D; --ink2: #5E5E5A; --ink3: #9A9A94;
+  --line: #E4E4DF; --soft: #EFEFEB; --accent: #0D0D0D;
+  --sans: 'Geist', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+}
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+#stage { position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; transform-origin: 0 0; font-family: var(--sans); color: var(--ink); }
+
+.top { position: absolute; left: 0; right: 0; top: 0; height: 120px; display: flex; align-items: center; gap: 16px; padding: 0 64px; }
+.top .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); }
+.top .t { font-size: 22px; font-weight: 500; letter-spacing: -.01em; }
+.top .r { margin-left: auto; font-family: var(--mono); font-size: 18px; color: var(--ink3); }
+.foot { position: absolute; left: 64px; right: 64px; bottom: 0; height: 110px; display: flex; align-items: center; gap: 28px; font-size: 18px; color: var(--ink3); font-family: var(--mono); }
+.foot .bar { flex: 1; height: 2px; background: var(--line); position: relative; border-radius: 2px; }
+.foot .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); width: 0; border-radius: 2px; }
+
+.scene { position: absolute; left: 0; right: 0; top: 120px; bottom: 110px; display: none; }
+.scene.on { display: block; animation: aparece .7s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes aparece { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* intro: la pregunta como en una caja de conversación */
+.big { position: absolute; left: 50%; top: 520px; transform: translateX(-50%); width: 952px; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 36px; padding: 44px 52px 96px; font-size: 68px; line-height: 1.15; font-weight: 500; letter-spacing: -.025em; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.06); }
+.big::after { content: ''; position: absolute; right: 36px; bottom: 28px; width: 52px; height: 52px; border-radius: 50%; background: var(--ink); }
+.big::before { content: '↑'; position: absolute; right: 36px; bottom: 28px; width: 52px; height: 52px; line-height: 52px; text-align: center; color: #fff; font-size: 28px; z-index: 1; }
+.sub { position: absolute; left: 50%; top: 1060px; transform: translateX(-50%); width: 900px; text-align: center; font-size: 26px; line-height: 1.6; color: var(--ink2); }
+.cursor::after { content: ''; display: inline-block; width: 4px; height: .9em; background: var(--ink); margin-left: 8px; vertical-align: -0.08em; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ficha */
+.marco { position: absolute; left: 64px; right: 64px; top: 40px; height: 620px; border-radius: 28px; background: var(--soft); display: flex; align-items: center; justify-content: center; }
+.marco::before { content: ''; position: absolute; inset: 56px; border: 2px dashed #CFCFC9; border-radius: 12px; }
+.marco span { font-family: var(--mono); font-size: 22px; color: var(--ink3); letter-spacing: .04em; }
+.ficha { position: absolute; left: 64px; right: 64px; top: 700px; height: 920px; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; box-shadow: 0 12px 40px rgba(0,0,0,.05); }
+.ficha .n { font-family: var(--mono); font-size: 18px; color: var(--ink3); }
+.ficha h2 { margin: 0; font-size: 62px; line-height: 1.1; font-weight: 500; letter-spacing: -.025em; min-height: 2.2em; }
+.campos { display: grid; grid-template-columns: 150px minmax(0, 1fr); row-gap: 0; font-size: 26px; border-top: 1px solid var(--line); }
+.campos .k, .campos .v { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.campos .k { color: var(--ink3); font-size: 20px; font-family: var(--mono); padding-top: 20px; }
+.campos .v { color: var(--ink); }
+.sello { margin-top: auto; align-self: flex-start; background: var(--ink); color: #fff; font-size: 22px; font-weight: 500; padding: 12px 24px; border-radius: 999px; opacity: 0; }
+.sello.on { animation: sello .5s ease both; }
+@keyframes sello { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* voces y estado */
+.voz { position: absolute; left: 64px; right: 64px; padding: 48px 56px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; }
+.voz q { display: block; font-size: 60px; line-height: 1.2; font-weight: 500; letter-spacing: -.02em; quotes: '«' '»'; }
+.voz cite { display: block; margin-top: 22px; font-style: normal; font-size: 22px; color: var(--ink2); }
+.estado { position: absolute; left: 64px; right: 64px; top: 80px; display: flex; flex-direction: column; gap: 20px; }
+.linea { display: grid; grid-template-columns: 1fr; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 32px 44px; font-size: 32px; line-height: 1.35; }
+.linea .f { font-family: var(--mono); color: var(--ink3); font-size: 26px; padding-top: 4px; }
+.linea .d { color: var(--ink); }
+.pregunta { font-size: 92px; line-height: 1.05; font-weight: 500; letter-spacing: -.03em; margin-top: 40px; }
+.fuentes { position: absolute; left: 64px; right: 64px; top: 80px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 48px 56px; font-size: 26px; line-height: 1.9; color: var(--ink2); }
+.fuentes b { color: var(--ink); font-weight: 500; }
+.fuentes h3 { margin: 0 0 16px; font-family: var(--mono); font-size: 18px; font-weight: 400; color: var(--ink3); letter-spacing: .06em; }
+@media (prefers-reduced-motion: reduce) { .scene.on, .sello.on { animation: none; opacity: 1; } .cursor::after { animation: none; } }
+</style>
+
+<div id="stage">
+  <div class="top"><div class="dot"></div><div class="t">Inventario de ausencias · Museo Nacional</div><div class="r" id="reloj"></div></div>
+
+  <section class="scene" id="s-intro">
+    <div class="big"><span class="cursor" id="intro-txt"></span></div>
+    <div class="sub">Museo Nacional de Colombia · salas 7 «Memoria y Nación» y 11 «Hacer sociedad»<br>piezas retiradas de exhibición el 15 de octubre de 2026</div>
+  </section>
+
+  <section class="scene" id="s-ficha">
+    <div class="marco"><span id="marco-txt">pared vacía</span></div>
+    <div class="ficha">
+      <div class="n" id="f-n"></div>
+      <h2 id="f-titulo"></h2>
+      <div class="campos">
+        <div class="k">autor</div><div class="v" id="f-autor"></div>
+        <div class="k">fecha</div><div class="v" id="f-fecha"></div>
+        <div class="k">sala</div><div class="v" id="f-sala"></div>
+        <div class="k">tipo</div><div class="v" id="f-tipo"></div>
+      </div>
+      <div class="sello" id="f-sello">Retirada · 15 oct 2026</div>
+    </div>
+  </section>
+
+  <section class="scene" id="s-voces">
+    <div class="voz" style="top:200px"><q>El Museo no puede ser un espacio de apología al delito o revictimización.</q><cite>— Paola Holguín, ministra de Cultura · según La Silla Vacía</cite></div>
+    <div class="voz" style="top:900px"><q>Totalmente arbitraria.</q><cite>— Andrés Góngora, ex curador jefe de etnografía del Museo Nacional, sobre el retiro · Cerosetenta</cite></div>
+  </section>
+
+  <section class="scene" id="s-estado">
+    <div class="estado">
+      <div class="linea"><div class="f">15.10.2026</div><div class="d">El Ministerio de Cultura ordena desmontar piezas de las salas 7 y 11. La Silla Vacía documenta al menos 47.</div></div>
+      <div class="linea"><div class="f">19.10.2026</div><div class="d">Un juez de Bogotá ordena conservar las piezas en un lugar seguro y frenar nuevas intervenciones mientras decide si deben volver.</div></div>
+      <div class="pregunta cursor">¿Volverán a las salas?</div>
+    </div>
+  </section>
+
+  <section class="scene" id="s-fuentes">
+    <div class="fuentes">
+      <h3>Fuentes · consultadas el 22 oct 2026</h3>
+      <b>La Silla Vacía</b> · Catálogo del retiro de obras en el Museo Nacional (20.10.2026)<br>
+      <b>Cerosetenta</b> · Entrevista a Andrés Góngora, ex curador del Museo Nacional (19.10.2026)<br>
+      <b>Euronews</b> · Un juez ordena proteger las piezas retiradas del Museo Nacional (20.10.2026)
+    </div>
+  </section>
+
+  <div class="foot"><div id="paso"></div><div class="bar"><i id="barra"></i></div><div>al menos 47 piezas retiradas</div></div>
+</div>
+
+<script>
+// =====================================================
+//  EDITA AQUÍ LAS PIEZAS (fuente: catálogo de La Silla Vacía, 20.10.2026)
+// =====================================================
+const PIEZAS = [
+  { titulo: 'Bolígrafo con el que se firmó el primer Acuerdo de Paz con las FARC', autor: 'Parker', fecha: 'c. 2016', sala: '11 · Hacer sociedad', tipo: 'objeto' },
+  { titulo: 'Revista Ventana Gay, n.º 1', autor: 'Manuel Antonio Velandia Mora y León Zuleta', fecha: '1980', sala: '11 · Hacer sociedad', tipo: 'revista' },
+  { titulo: 'Afiche en homenaje a la candidatura de Carlos Pizarro', autor: 'Centro de Memoria, Paz y Reconciliación', fecha: '2010', sala: '11 · Hacer sociedad', tipo: 'afiche' },
+  { titulo: 'Afiche en homenaje a la candidatura de Bernardo Jaramillo', autor: 'Centro de Memoria, Paz y Reconciliación', fecha: '2010', sala: '11 · Hacer sociedad', tipo: 'afiche' },
+  { titulo: 'Tarjetón electoral de la Séptima Papeleta', autor: 'desconocido', fecha: '1990', sala: '11 · Hacer sociedad', tipo: 'tarjetón' },
+  { titulo: 'Bandera del orgullo gay (Elizabeth Castillo)', autor: 'desconocido', fecha: 'c. 2010', sala: '11 · Hacer sociedad', tipo: 'bandera' },
+  { titulo: 'Desenterrando memorias (serie de 12 dibujos)', autor: 'Inty Maleywa', fecha: '2013', sala: '11 · Hacer sociedad', tipo: 'dibujo' },
+  { titulo: 'Ideales feministas', autor: 'Lucila Rubio de Laverde', fecha: '1950', sala: '11 · Hacer sociedad', tipo: 'impreso' },
+  { titulo: 'Periódico Nuestras Mujeres', autor: 'Asociación Democrática de Mujeres Colombianas', fecha: '1955', sala: '11 · Hacer sociedad', tipo: 'periódico' },
+  { titulo: 'Cartas desde la cárcel', autor: 'William Enrique Navarro Sanjuán', fecha: '2002', sala: '11 · Hacer sociedad', tipo: 'cartas' },
+  { titulo: 'La cosecha de los violentos', autor: 'Alfonso Quijano Acero', fecha: '1968', sala: '7 · Memoria y Nación', tipo: 'obra gráfica' },
+  { titulo: 'El juicio', autor: 'Carlos Granada Arango', fecha: '1972', sala: '7 · Memoria y Nación', tipo: 'obra gráfica' },
+  { titulo: 'Platea', autor: 'Miguel Ángel Rojas', fecha: '1973', sala: '11 · Hacer sociedad', tipo: 'obra' }
+];
+const PREGUNTA = '¿Qué pasó con estas obras del Museo Nacional?';
+const SEG_FICHA = 5.5;
+
+// ---------- No hace falta tocar nada de aquí para abajo ----------
+const $ = (id) => document.getElementById(id);
+const pasos = [{ escena: 's-intro', seg: 7 }]
+  .concat(PIEZAS.map((p, i) => ({ escena: 's-ficha', seg: SEG_FICHA, i })))
+  .concat([{ escena: 's-voces', seg: 9 }, { escena: 's-estado', seg: 9 }, { escena: 's-fuentes', seg: 7 }]);
+
+let paso = -1, timers = [], inicioPaso = 0, pausa = false;
+function limpiar() { timers.forEach(clearTimeout); timers = []; }
+function escribir(el, txt, ms, despues) {
+  el.textContent = ''; let k = 0;
+  const f = () => { if (k <= txt.length) { el.textContent = txt.slice(0, k++); timers.push(setTimeout(f, ms)); } else if (despues) despues(); };
+  f();
+}
+function ir(n) {
+  limpiar();
+  paso = (n + pasos.length) % pasos.length;
+  const P = pasos[paso];
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('on'));
+  const sc = $(P.escena); void sc.offsetWidth; sc.classList.add('on');
+  if (P.escena === 's-intro') escribir($('intro-txt'), PREGUNTA, 55);
+  if (P.escena === 's-ficha') {
+    const p = PIEZAS[P.i];
+    $('f-n').textContent = 'Pieza ' + String(P.i + 1).padStart(2, '0') + ' / ' + String(PIEZAS.length).padStart(2, '0') + ' · ficha de ausencia';
+    ['f-autor', 'f-fecha', 'f-sala', 'f-tipo'].forEach(id => $(id).textContent = '');
+    $('f-sello').classList.remove('on');
+    escribir($('f-titulo'), p.titulo, 28, () => {
+      $('f-autor').textContent = p.autor; $('f-fecha').textContent = p.fecha;
+      $('f-sala').textContent = p.sala; $('f-tipo').textContent = p.tipo;
+      timers.push(setTimeout(() => $('f-sello').classList.add('on'), 500));
+    });
+  }
+  $('paso').textContent = String(paso + 1).padStart(2, '0') + ' / ' + pasos.length;
+  inicioPaso = performance.now();
+  if (!pausa) timers.push(setTimeout(() => ir(paso + 1), P.seg * 1000));
+}
+
+// barra de avance y reloj
+function tic() {
+  const P = pasos[paso];
+  if (P && !pausa) $('barra').style.width = Math.min(100, (performance.now() - inicioPaso) / (P.seg * 10)) + '%';
+  const d = new Date();
+  $('reloj').textContent = d.toLocaleDateString('es-CO') + ' · ' + d.toLocaleTimeString('es-CO', { hour12: false });
+  requestAnimationFrame(tic);
+}
+
+// escala
+function ajustar() {
+  const s = Math.min(innerWidth / 1080, innerHeight / 1920);
+  const st = $('stage');
+  st.style.transform = 'scale(' + s + ')';
+  st.style.left = Math.round((innerWidth - 1080 * s) / 2) + 'px';
+  st.style.top = Math.round((innerHeight - 1920 * s) / 2) + 'px';
+}
+
+// teclado: espacio pausa · ← → anterior/siguiente
+addEventListener('keydown', e => {
+  if (e.key === ' ') { pausa = !pausa; if (!pausa) ir(paso); else limpiarSoloAvance(); e.preventDefault(); }
+  if (e.key === 'ArrowRight') ir(paso + 1);
+  if (e.key === 'ArrowLeft') ir(paso - 1);
+});
+function limpiarSoloAvance() { /* en pausa la escena actual se queda quieta */ timers.forEach(clearTimeout); timers = []; }
+
+addEventListener('resize', ajustar);
+ajustar(); tic(); ir(0);
+</script>
+
+</body>
+</html>
